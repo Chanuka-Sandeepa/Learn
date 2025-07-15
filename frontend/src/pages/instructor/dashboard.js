@@ -387,7 +387,7 @@ const InstructorDashboard = () => {
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiCall('/courses/instructor/my-courses');
+      const data = await apiCall('https://courselearn-2.onrender.com/api/courses/instructor/my-courses');
       setCourses(data.courses || []);
     } catch (error) {
       setError('Failed to fetch courses');
@@ -519,7 +519,7 @@ const InstructorDashboard = () => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
   
     try {
-      await apiCall(`/courses/${courseId}`, {
+      await apiCall(`https://courselearn-2.onrender.com/api/courses/${courseId}`, {
         method: 'DELETE',
       });
   
