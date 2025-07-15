@@ -7,14 +7,12 @@ import {
   Trash2, 
   Users, 
   BookOpen, 
-  DollarSign, 
-  Calendar, 
+  DollarSign,  
   Search, 
   X, 
   Save, 
   LogOut,
   User,
-  Key,
   Settings,
   TrendingUp,
   Award,
@@ -309,7 +307,6 @@ const InstructorDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [courses, setCourses] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
@@ -339,7 +336,7 @@ const InstructorDashboard = () => {
   const token = localStorage.getItem('token');
 
   // API Base URL
-  const API_BASE = 'https://courselearn-2.onrender.com/api';
+  const API_BASE = 'http://localhost:5000/api';
 
   // API helper function
   const apiCall = useCallback(async (endpoint, options = {}) => {
@@ -397,16 +394,6 @@ const InstructorDashboard = () => {
       setToast({ message: 'Failed to fetch courses', type: 'error' });
     } finally {
       setLoading(false);
-    }
-  }, [apiCall]);
-
-  // Fetch categories
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await apiCall('/courses/categories');
-      setCategories(data.categories || []);
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
     }
   }, [apiCall]);
 
@@ -520,22 +507,40 @@ const InstructorDashboard = () => {
     }
   };
 
-  // Handle delete course
   const handleDeleteCourse = async (courseId) => {
+    console.log('Course ID passed to delete function:', courseId);
+  
+    if (!courseId) {
+      console.error('[❌] No courseId passed!');
+      setToast({ message: 'Invalid course ID', type: 'error' });
+      return;
+    }
+  
     if (!window.confirm('Are you sure you want to delete this course?')) return;
-
+  
     try {
-      await apiCall(`/courses/${courseId}`, { method: 'DELETE' });
+      await apiCall(`/courses/${courseId}`, {
+        method: 'DELETE',
+      });
+  
       setToast({ message: 'Course deleted successfully!', type: 'success' });
-      fetchCourses();
+      fetchCourses(); // Refresh course list
     } catch (error) {
-      setToast({ message: 'Failed to delete course', type: 'error' });
+      console.error('Delete error:', error);
+      setToast({
+        message: error?.response?.data?.message || error.message || 'Failed to delete course',
+        type: 'error',
+      });
     }
   };
 
   // Handle edit course
   const handleEditCourse = (course) => {
-    setEditingCourse(course);
+    // Ensure _id is present (some APIs return course.id instead of _id)
+    const id = course._id || course.id;
+  
+    setEditingCourse({ ...course, _id: id }); // ⬅️ this line is crucial
+  
     setFormData({
       title: course.title,
       description: course.description,
@@ -550,9 +555,10 @@ const InstructorDashboard = () => {
       learningObjectives: course.learningObjectives?.join(', ') || '',
       maxStudents: course.maxStudents?.toString() || ''
     });
+  
     setShowCreateForm(true);
   };
-
+  
   // Calculate stats
   const stats = {
     totalCourses: courses.length,
@@ -575,8 +581,8 @@ const InstructorDashboard = () => {
     }
     fetchUserProfile();
     fetchCourses();
-    fetchCategories();
-  }, [token, navigate, fetchUserProfile, fetchCourses, fetchCategories]);
+
+  }, [token, navigate, fetchUserProfile, fetchCourses]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -907,7 +913,7 @@ const InstructorDashboard = () => {
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {course.status || 'Draft'}
+                          {course.status || 'Create'}
                         </span>
                       </div>
                     </div>
@@ -950,7 +956,7 @@ const InstructorDashboard = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteCourse(course._id)}
+                            onClick={() => handleDeleteCourse(course._id || course.id)}
                             className="p-2 text-gray-400 transition-colors hover:text-red-600"
                             title="Delete course"
                           >
@@ -958,6 +964,7 @@ const InstructorDashboard = () => {
                           </button>
                         </div>
                       </div>
+
                     </div>
                   </div>
                 ))}
@@ -1143,17 +1150,12 @@ const InstructorDashboard = () => {
                     <label className="block mb-2 text-sm font-medium text-gray-700">
                       Category *
                     </label>
-                    <select
+                    <input
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
-                    >
-                      <option value="">Select category</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
 
