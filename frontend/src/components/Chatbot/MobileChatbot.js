@@ -56,7 +56,7 @@ const MobileChatbot = () => {
   const fetchApiUsage = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/chatgpt/usage`, {
+      const response = await axios.get(`https://courselearn-2.onrender.com/api/chatgpt/usage`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApiUsage(response.data);
